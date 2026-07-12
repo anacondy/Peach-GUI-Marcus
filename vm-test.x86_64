@@ -1,0 +1,5 @@
+# Merge into packages.x86_64 ONLY for a VirtualBox test build.
+# Before a real build: git checkout packages.x86_64 to drop these again.
+open-vm-tools
+virtualbox-guest-utils-nox
+qemu-guest-agent
