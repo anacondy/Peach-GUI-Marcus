@@ -1,97 +1,57 @@
-# Peach-GUI-Marcus — frontend + fixes, integrated
+# Peach-GUI-Marcus
 
-## Is the DE real or decorative? Real — with one honest caveat
+Welcome to the **Peach-GUI-Marcus** project. This repository contains the live, functional configurations for an Archiso-based Linux build featuring a highly customized Sway desktop environment. 
 
-Everything in this zip is actual sway/waybar/wofi/fastfetch configuration —
-the same kind of file that already makes your *current* top waybar genuinely
-live (your own screenshots proved that: 26%→22%→7% CPU actually moving).
-None of it is a browser mockup. Once these files sit in the right place and
-you rebuild:
-- clicking a dock icon really runs `pcmanfm` / `firefox` / `kitty` / etc.
-- the taskbar really shows your open windows (via `wlr/taskbar`)
-- `fastfetch` really queries your live hardware — nothing here is faked
-- Alt+Space really searches your real files via `plocate`
+## System Status: Real vs. Decorative
+Everything in this configuration is a **real, functional desktop environment**—not a mockup.
+* Dock icons launch actual applications (`pcmanfm`, `firefox`, `kitty`).
+* The taskbar (`wlr/taskbar`) accurately tracks open windows.
+* `fastfetch` queries live hardware natively.
+* `Alt+Space` performs live file searches via `plocate`.
 
-The one caveat, unchanged from before: rounded corners / blur / shadows need
-**SwayFX**, not vanilla sway, and none of that renders under the VM's
-`pixman` software renderer (your own `zprofile` forces that inside VMs on
-purpose). You will only see the rounding/blur/shadow on the real HP 14s.
-Everything else — dock clicks, taskbar, search, fastfetch — works under
-vanilla sway too, VM included.
+**The SwayFX Hardware Caveat:**
+Rounded corners, blur, and shadows require **SwayFX**. These effects will *not* render inside a Virtual Machine running the software-based `pixman` renderer. You must deploy this ISO to the actual target hardware (e.g., HP 14s) to experience the full immersive visual integration. All other functionality (docks, search, fastfetch) operates normally in VMs under vanilla Sway.
 
-## Extract this correctly (the waybar folder bug, avoided this time)
+## File Structure & Updates
 
-Your other session's diagnosis of the doubled `airootfs/root/airootfs/root/`
-path was right — that happens when you right-click the wrong folder in VS
-Code's tree and it nests instead of landing at the top level.
+| Component | Description | Last Updated |
+|---|---|---|
+| `packages.x86_64` | Base lists + `zsh`, `grml-zsh-config`, `plocate`, `jq`, `firefox`, `pcmanfm` | 12-Jul-2026 |
+| `...sway/config` | Unified SwayFX config with scaling and spotlight additions | 12-Jul-2026 |
+| `...waybar/config` | Fixed top-bar (12-hour clock, correct paths) | 12-Jul-2026 |
+| `...waybar/style.css` | Immersive dark and frosted glass styling matching the system theme | 12-Jul-2026 |
+| `...waybar/dock.jsonc` & `.css` | App dock (Editor now safely launches `kitty nvim`) | 12-Jul-2026 |
+| `...fastfetch/config.jsonc` | Marcus Mix–branded fastfetch using live system metrics | 12-Jul-2026 |
+| `...root/.zshrc.local` | Sourced by `grml-zsh-config` to run `fastfetch` on terminal launch | 12-Jul-2026 |
+| `...gtk-3.0/4.0/settings.ini` | Forces `MarcusMix` as the global icon theme | 12-Jul-2026 |
+| `customize_airootfs.sh` | Bakes real root password into the build via `chpasswd` | 12-Jul-2026 |
 
-**To avoid repeating it:** extract this zip so its contents land *directly*
-in your repo root — `airootfs/`, `packages.x86_64` etc. should sit right
-next to your existing `LICENSE`, not inside another folder. In PowerShell,
-from inside `Peach-GUI-Marcus`:
-```powershell
-Expand-Archive -Path path\to\marcus-mix-frontend-v2.zip -DestinationPath . -Force
-```
-That extracts to the current directory directly — no manual folder creation
-in the VS Code UI at all, which is what caused the nesting the first time.
+## System Mechanics
 
-## What's genuinely new or fixed in this drop
+### Root Password Handling
+The script `customize_airootfs.sh` uses `chpasswd` to inject `root:marcus2026` into the build. **This is a temporary placeholder—change it.** While upstream archiso deprecates this in favor of direct `etc/shadow` hash edits, this method is used temporarily to avoid dependency on exact shadow file states. 
 
-| File | What it is |
-|---|---|
-| `packages.x86_64` | Your list + `zsh`, `grml-zsh-config` (see below), `plocate`, `jq`, `firefox`, `pcmanfm` |
-| `airootfs/root/.config/sway/config` | Your original config, merged with the SwayFX/scaling/spotlight/dock additions — one file, not a fragile `include` chain |
-| `airootfs/root/.config/waybar/config` | The top-bar fix from your other session (12-hour clock etc.) — same content, correct path this time |
-| `airootfs/root/.config/waybar/style.css` | **New** — this bar had zero custom CSS before (stock example styling); now matches the rest of the theme |
-| `airootfs/root/.config/waybar/dock.jsonc` + `dock.css` | The app dock (dog centered). One change from last time: the editor button now runs `kitty nvim`, not `code` — VS Code isn't installed yet, so it would've silently done nothing on click |
-| `airootfs/root/.config/fastfetch/config.jsonc` | Marcus Mix–branded fastfetch — real modules only, no mocked fields |
-| `airootfs/root/.zshrc.local` | grml-zsh-config's own designated file for personal customizations (confirmed via grml's docs — this doesn't fight the managed grml zshrc). Runs `fastfetch` on every new interactive shell |
-| `airootfs/root/customize_airootfs.sh` | Bakes a real root password into the build (see below) |
-| `airootfs/root/.config/gtk-3.0/settings.ini`, `gtk-4.0/settings.ini` | Actually sets `MarcusMix` as the icon theme — mentioned last time, actually created now |
-| `airootfs/usr/share/icons/MarcusMix/` | Unchanged from last time |
-| `airootfs/root/.config/sway/scripts/*.sh` | Unchanged from last time |
+### ZSH & Fastfetch Automation
+Terminal startup sequences rely strictly on `zsh` combined with `grml-zsh-config`. The `grml` framework automatically sources `~/.zshrc.local` on startup, which is what allows the customized `fastfetch` module to execute seamlessly upon opening a new terminal.
 
-## Password: baked in, with an honest note on the mechanism
+## Pre-Build Checklist (Required Core Files)
+This repository focuses on frontend deployment. You must manually copy the core Archiso engine files from your legacy `marcus-mix-configs` repository to the root of this project before building:
+* `profiledef.sh`
+* `pacman.conf`
+* `build-test-iso.sh`
+* `bootstrap_packages`
+* `vm-test.x86_64`
 
-`customize_airootfs.sh` runs once during the build (inside the chroot) and
-sets `root:marcus2026` via `chpasswd` — **change that password**, it's a
-placeholder. This mechanism is flagged deprecated by upstream archiso
-(still functional, not yet removed) in favor of hand-editing a hashed entry
-into `airootfs/etc/shadow`. I didn't do the direct-shadow-edit version
-because I don't have your actual current shadow file content to safely
-patch — `chpasswd` at build time sidesteps that by not needing to know it.
-Worth migrating later; not urgent now.
+## Pending Milestones
+The following deep-system tuning metrics remain untouched and are queued for future phases:
+* Wine/Proton staging and validation
+* Deep FPS/Hz kernel tuning
+* OBS Studio and DaVinci Resolve rendering tests
+* Verification of background daemons (`ananicy-cpp`, `power-profiles-daemon`)
 
-## zsh / grml-zsh-config, confirmed
+## Build & Test Instructions
 
-The other session's diagnosis was right, and I've made sure both packages
-that fix it are in `packages.x86_64` — not just `zsh` but `grml-zsh-config`
-too. That second one matters specifically for `.zshrc.local` to do anything:
-it's grml's own zshrc that sources `~/.zshrc.local` automatically. Without
-`grml-zsh-config` installed, a bare zsh wouldn't source that file at all, and
-the fastfetch-on-new-terminal behavior would silently never fire.
-
-## What you'll still need to bring over from marcus-mix-configs
-
-I've never seen the actual contents of these files — only their names in a
-screenshot — so I can't safely reconstruct them. Copy these over as-is from
-your old repo: `profiledef.sh`, `pacman.conf`, `build-test-iso.sh`,
-`bootstrap_packages`, `vm-test.x86_64`. Nothing in this zip touches or
-replaces any of them.
-
-## Not touched this round
-
-The 20-goal scorecard from your other session is still accurate for
-everything outside the DE/frontend: Wine/Proton, FPS/Hz tuning, OBS/DaVinci
-testing, and confirming `ananicy-cpp`/`power-profiles-daemon` are actually
-running are all still open, and weren't in scope here.
-
-## After extracting
-
-1. Copy over the five files listed above from your old repo
-2. Commit, push, `git pull` in WSL, rebuild
-3. Confirm in the VM: dock icons launch real apps, Alt+Space searches real
-   files, `fastfetch` shows Marcus Mix branding on new terminals, root logs
-   into swaylock with the password you set
-4. Then the real test: the HP 14s itself, for the rounding/blur/shadow and
-   for real WiFi/BT/battery/printer behavior the VM can't validate
+1. **Merge Core Files:** Ensure the five core engine files listed above are in the project root.
+2. **Sync & Pull:** Commit your changes, push to GitHub, and run `git pull` in your WSL build environment.
+3. **Build & VM Verification:** Compile the ISO and boot the VM. Verify that dock icons run, `Alt+Space` opens wofi/plocate, and terminals spawn the custom fastfetch. Log into Sway using the baked-in password.
+4. **Hardware Deployment:** Flash to USB and boot on the actual HP 14s to test SwayFX visual modifiers (blur/shadows/rounding) and hardware-specific modules (WiFi/BT/Battery).
