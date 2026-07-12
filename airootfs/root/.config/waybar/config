@@ -1,0 +1,33 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 28,
+    "modules-left": ["sway/workspaces"],
+    "modules-center": ["clock"],
+    "modules-right": ["network", "cpu", "memory", "battery", "tray"],
+
+    "clock": {
+        "format": "{:%I:%M %p}",
+        "tooltip-format": "{:%A, %d %B %Y}"
+    },
+    "cpu": {
+        "format": "CPU {usage}%",
+        "interval": 2
+    },
+    "memory": {
+        "format": "RAM {}%",
+        "interval": 2
+    },
+    "battery": {
+        "format": "{capacity}% {icon}",
+        "format-icons": ["", "", "", "", ""]
+    },
+    "network": {
+        "format-wifi": "{essid} ({signalStrength}%)",
+        "format-ethernet": "{ipaddr}",
+        "format-disconnected": "offline"
+    },
+    "tray": {
+        "spacing": 10
+    }
+}

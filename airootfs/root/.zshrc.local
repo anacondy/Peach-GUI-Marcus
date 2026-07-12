@@ -1,0 +1,18 @@
+# ~/.zshrc.local
+# This is grml-zsh-config's own designated file for personal customizations —
+# sourced automatically *after* grml's main zshrc, so this doesn't touch or
+# fight the managed config that's already working. (grml's refcard: personal
+# config goes in ~/.zshrc.local; ~/.zshrc.pre for things that need to load
+# before grml's setup runs.)
+
+# Show real system info on every new terminal — this is what makes
+# "Marcus Mix shows real hardware/software info" true in the actual terminal,
+# not just in a preview. Skip it for non-interactive shells (scripts, VS Code
+# tasks, etc.) so it doesn't clutter automated output.
+if [[ -o interactive ]] && command -v fastfetch >/dev/null 2>&1; then
+    fastfetch
+fi
+
+# root doesn't get grml's full alias/function set by default (security
+# default). Uncomment if you want the full grml experience as root too:
+# export GRML_ALWAYS_LOAD_ALL=1

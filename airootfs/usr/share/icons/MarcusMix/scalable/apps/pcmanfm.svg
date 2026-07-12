@@ -1,0 +1,39 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="7" result="off"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="back" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d65d0e"/>
+      <stop offset="1" stop-color="#a8460a"/>
+    </linearGradient>
+    <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fe8019"/>
+      <stop offset="1" stop-color="#d65d0e"/>
+    </linearGradient>
+    <radialGradient id="gloss" cx="0.3" cy="0.1" r="0.7">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="frontClip">
+      <rect x="36" y="112" width="184" height="88" rx="16"/>
+    </clipPath>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <!-- back panel with tab -->
+    <rect x="58" y="60" width="76" height="26" rx="9" fill="url(#back)"/>
+    <rect x="58" y="76" width="146" height="100" rx="14" fill="url(#back)"/>
+
+    <!-- a hint of a document peeking out, for extra depth -->
+    <rect x="118" y="70" width="58" height="66" rx="4" fill="#fbf1c7" opacity="0.9"/>
+
+    <!-- front pocket, overlapping lower/wider -->
+    <rect x="36" y="112" width="184" height="88" rx="16" fill="url(#front)"/>
+    <rect x="36" y="112" width="184" height="88" rx="16" fill="url(#gloss)" clip-path="url(#frontClip)"/>
+    <path d="M 44 128 L 212 128" stroke="#fff3d6" stroke-opacity="0.35" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

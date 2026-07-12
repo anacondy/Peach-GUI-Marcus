@@ -1,0 +1,58 @@
+/* Marcus Mix dock styling.
+   Icon paths assume the icon theme is installed at
+   /usr/share/icons/MarcusMix — adjust if you install it elsewhere. */
+
+* {
+    font-family: "JetBrains Mono";
+}
+
+window#waybar {
+    background: transparent;
+}
+
+#taskbar,
+#custom-terminal, #custom-files, #custom-dog,
+#custom-browser, #custom-editor, #custom-settings {
+    background-color: rgba(29, 32, 33, 0.55);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 36px 36px;
+    min-width: 46px;
+    min-height: 46px;
+    margin: 7px 3px;
+    padding: 0 4px;
+    border-radius: 16px;
+    border: 1px solid rgba(235, 219, 178, 0.06);
+    transition: margin 0.12s ease-in-out, background-color 0.12s ease-in-out;
+}
+
+#taskbar:hover,
+#custom-terminal:hover, #custom-files:hover, #custom-dog:hover,
+#custom-browser:hover, #custom-editor:hover, #custom-settings:hover {
+    background-color: rgba(235, 219, 178, 0.14);
+    margin-top: 2px;
+    margin-bottom: 12px;
+}
+
+/* the dog gets a little extra presence, since it's the brand mark */
+#custom-dog {
+    background-size: 44px 44px;
+    min-width: 54px;
+    min-height: 54px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+#custom-terminal  { background-image: url("/usr/share/icons/MarcusMix/scalable/apps/kitty.svg"); }
+#custom-files     { background-image: url("/usr/share/icons/MarcusMix/scalable/apps/system-file-manager.svg"); }
+#custom-dog       { background-image: url("/usr/share/icons/MarcusMix/scalable/apps/marcus-mix-logo.svg"); }
+#custom-browser   { background-image: url("/usr/share/icons/MarcusMix/scalable/apps/web-browser.svg"); }
+#custom-editor    { background-image: url("/usr/share/icons/MarcusMix/scalable/apps/accessories-text-editor.svg"); }
+#custom-settings  { background-image: url("/usr/share/icons/MarcusMix/scalable/apps/preferences-system.svg"); }
+
+tooltip {
+    background-color: #282828;
+    border: 1px solid #504945;
+    border-radius: 8px;
+    color: #ebdbb2;
+}

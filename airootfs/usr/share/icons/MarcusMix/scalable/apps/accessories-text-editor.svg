@@ -1,0 +1,31 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="7" result="off"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="page" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbf1c7"/>
+      <stop offset="1" stop-color="#ebdbb2"/>
+    </linearGradient>
+    <radialGradient id="gloss" cx="0.3" cy="0.12" r="0.6">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="pageClip">
+      <path d="M 74 40 L 160 40 L 200 80 L 200 208 Q 200 222 186 222 L 74 222 Q 60 222 60 208 L 60 54 Q 60 40 74 40 Z"/>
+    </clipPath>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <path d="M 74 40 L 160 40 L 200 80 L 200 208 Q 200 222 186 222 L 74 222 Q 60 222 60 208 L 60 54 Q 60 40 74 40 Z" fill="url(#page)"/>
+    <path d="M 160 40 L 200 80 L 160 80 Z" fill="#d5c295"/>
+    <path d="M 74 40 L 160 40 L 200 80 L 200 208 Q 200 222 186 222 L 74 222 Q 60 222 60 208 L 60 54 Q 60 40 74 40 Z" fill="url(#gloss)" clip-path="url(#pageClip)"/>
+
+    <path d="M 100 150 L 82 168 L 100 186" fill="none" stroke="#d65d0e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 160 150 L 178 168 L 160 186" fill="none" stroke="#d65d0e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 138 140 L 122 196" fill="none" stroke="#fabd2f" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>

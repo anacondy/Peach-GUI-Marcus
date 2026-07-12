@@ -1,0 +1,58 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="7" result="off"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="earGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d79921"/>
+      <stop offset="1" stop-color="#a8690f"/>
+    </linearGradient>
+    <linearGradient id="headGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fabd2f"/>
+      <stop offset="0.55" stop-color="#d79921"/>
+      <stop offset="1" stop-color="#b3690f"/>
+    </linearGradient>
+    <linearGradient id="muzzleGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbf1c7"/>
+      <stop offset="1" stop-color="#ebdbb2"/>
+    </linearGradient>
+    <radialGradient id="gloss" cx="0.35" cy="0.25" r="0.55">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="headClip">
+      <ellipse cx="128" cy="132" rx="70" ry="64"/>
+    </clipPath>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <!-- ears: teardrop shapes drooping outward, this is what breaks the round/square silhouette -->
+    <path d="M 66 96 C 30 96 8 130 14 168 C 18 194 40 202 54 188 C 68 174 70 128 74 100 Z" fill="url(#earGrad)"/>
+    <path d="M 190 96 C 226 96 248 130 242 168 C 238 194 216 202 202 188 C 188 174 186 128 182 100 Z" fill="url(#earGrad)"/>
+
+    <!-- head -->
+    <ellipse cx="128" cy="132" rx="70" ry="64" fill="url(#headGrad)"/>
+    <ellipse cx="128" cy="132" rx="70" ry="64" fill="url(#gloss)" clip-path="url(#headClip)"/>
+
+    <!-- muzzle -->
+    <ellipse cx="128" cy="168" rx="40" ry="30" fill="url(#muzzleGrad)"/>
+
+    <!-- nose -->
+    <path d="M 112 150 Q 128 140 144 150 Q 144 164 128 168 Q 112 164 112 150 Z" fill="#282828"/>
+    <ellipse cx="121" cy="150" rx="3.5" ry="2.5" fill="#ffffff" opacity="0.5"/>
+
+    <!-- eyes -->
+    <ellipse cx="102" cy="122" rx="9" ry="11" fill="#1d2021"/>
+    <ellipse cx="154" cy="122" rx="9" ry="11" fill="#1d2021"/>
+    <circle cx="99" cy="117" r="2.6" fill="#ffffff" opacity="0.85"/>
+    <circle cx="151" cy="117" r="2.6" fill="#ffffff" opacity="0.85"/>
+
+    <!-- collar -->
+    <path d="M 76 178 Q 128 200 180 178 L 176 190 Q 128 210 80 190 Z" fill="#8ec07c"/>
+    <circle cx="128" cy="202" r="7" fill="#fe8019"/>
+    <circle cx="126" cy="200" r="2" fill="#ffffff" opacity="0.6"/>
+  </g>
+</svg>

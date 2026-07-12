@@ -1,0 +1,12 @@
+[Icon Theme]
+Name=Marcus Mix
+Comment=Dimensional Gruvbox icon set for the Marcus Mix distro
+Inherits=Adwaita,hicolor
+Directories=scalable/apps
+
+[scalable/apps]
+Size=128
+MinSize=16
+MaxSize=512
+Type=Scalable
+Context=Applications

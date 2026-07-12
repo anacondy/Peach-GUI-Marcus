@@ -1,0 +1,52 @@
+// Marcus Mix dock — a second waybar bar, not the main top bar.
+// Launched via `exec_always waybar -c dock.jsonc -s dock.css` in sway config.
+{
+    "layer": "top",
+    "position": "bottom",
+    "height": 60,
+    "margin-bottom": 8,
+    "spacing": 4,
+
+    "modules-left": ["wlr/taskbar"],
+    "modules-center": ["custom/terminal", "custom/files", "custom/dog", "custom/browser", "custom/editor"],
+    "modules-right": ["custom/settings"],
+
+    "wlr/taskbar": {
+        "format": "{icon}",
+        "icon-size": 36,
+        "icon-theme": "MarcusMix",
+        "tooltip-format": "{title}",
+        "on-click": "activate"
+    },
+
+    "custom/terminal": {
+        "format": " ",
+        "tooltip": "Terminal",
+        "on-click": "kitty"
+    },
+    "custom/files": {
+        "format": " ",
+        "tooltip": "Files",
+        "on-click": "pcmanfm"
+    },
+    "custom/dog": {
+        "format": " ",
+        "tooltip": "Marcus Mix — show all apps",
+        "on-click": "wofi --show drun --allow-images"
+    },
+    "custom/browser": {
+        "format": " ",
+        "tooltip": "Browser",
+        "on-click": "firefox"
+    },
+    "custom/editor": {
+        "format": " ",
+        "tooltip": "Editor",
+        "on-click": "kitty nvim"
+    },
+    "custom/settings": {
+        "format": " ",
+        "tooltip": "Settings",
+        "on-click": "kitty nvim ~/.config/sway/config"
+    }
+}

@@ -1,0 +1,33 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="7" result="off"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="sphere" cx="0.35" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#a8d8d4"/>
+      <stop offset="0.35" stop-color="#83a598"/>
+      <stop offset="0.75" stop-color="#458588"/>
+      <stop offset="1" stop-color="#204e51"/>
+    </radialGradient>
+    <radialGradient id="specular" cx="0.32" cy="0.24" r="0.22">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="orbClip">
+      <circle cx="128" cy="128" r="86"/>
+    </clipPath>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <circle cx="128" cy="128" r="86" fill="url(#sphere)"/>
+    <g clip-path="url(#orbClip)" opacity="0.55" fill="none" stroke="#d5e8e6" stroke-width="2.5">
+      <ellipse cx="128" cy="128" rx="30" ry="86"/>
+      <ellipse cx="128" cy="128" rx="62" ry="86" transform="rotate(18 128 128)"/>
+      <ellipse cx="128" cy="128" rx="86" ry="22"/>
+    </g>
+    <circle cx="128" cy="128" r="86" fill="url(#specular)"/>
+  </g>
+</svg>

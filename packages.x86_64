@@ -1,0 +1,129 @@
+# --- Core Base & Kernel ---
+base
+linux
+linux-firmware
+intel-ucode
+sof-firmware
+mkinitcpio
+mkinitcpio-archiso
+
+# --- GPU / Rendering (the real fix, not the pixman workaround) ---
+mesa
+vulkan-icd-loader
+vulkan-intel
+intel-media-driver
+
+# --- Filesystem Support ---
+btrfs-progs
+e2fsprogs
+exfatprogs
+ntfs-3g
+dosfstools
+lvm2
+cryptsetup
+
+# --- Install Toolchain (needed once, to put this on the HP 14s) ---
+arch-install-scripts
+archinstall
+parted
+gptfdisk
+grub
+efibootmgr
+syslinux
+
+# --- Networking ---
+dhcpcd
+iwd
+iw
+wpa_supplicant
+wireless-regdb
+bind
+openssh
+rsync
+reflector
+
+# --- Bluetooth / Printing / Scanning ("works out of the box") ---
+bluez
+bluez-utils
+cups
+sane
+
+# --- Battery, Memory & "AI-ish" Scheduling ---
+power-profiles-daemon
+zram-generator
+ananicy-cpp
+earlyoom
+
+# --- Privacy / Sandboxing ---
+flatpak
+
+# --- Dev basics (git + AUR build tools; VS Code/JetBrains come via AUR post-install) ---
+git
+base-devel
+
+# --- Core Utilities ---
+sudo
+vim
+neovim
+nano
+mc
+less
+diffutils
+man-db
+man-pages
+usbutils
+smartmontools
+dmidecode
+pv
+tmux
+screen
+fastfetch
+# zsh + grml-zsh-config: root's login shell has always been zsh (that's why
+# .zprofile/.zlogin exist in the archiso skeleton — bash never reads either
+# file). These were trimmed out during the RAM/bloat pass without zsh being
+# put back, which is why tty1 went black — no shell existed to exec sway from
+# .zprofile in the first place. Confirmed and fixed; keeping both in for good.
+zsh
+grml-zsh-config
+# plocate: backs the Spotlight-style search (Alt+Space) — was never actually
+# added before, this is the fix for that
+plocate
+# jq: only needed by the auto-scale.sh output-scaling script
+jq
+
+# --- Custom Wayland & Sway Desktop Environment ---
+sway
+swaybg
+swaylock
+swayidle
+waybar
+wofi
+mako
+kitty
+kitty-terminfo
+xdg-desktop-portal-wlr
+polkit-gnome
+xdg-utils
+brightnessctl
+grim
+slurp
+
+# --- Apps behind the dock icons, so they point at real installed things ---
+firefox
+pcmanfm
+
+# --- Audio Architecture (PipeWire) ---
+pipewire
+pipewire-alsa
+pipewire-pulse
+wireplumber
+alsa-utils
+
+# --- Core System & UI Fonts ---
+ttf-dejavu
+ttf-font-awesome
+noto-fonts
+terminus-font
+wl-clipboard
+cliphist
+playerctl

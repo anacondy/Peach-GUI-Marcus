@@ -1,0 +1,44 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="7" result="off"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a89984"/>
+      <stop offset="1" stop-color="#665c54"/>
+    </linearGradient>
+    <radialGradient id="dial" cx="0.35" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#d3869b"/>
+      <stop offset="1" stop-color="#8f3f5c"/>
+    </radialGradient>
+    <radialGradient id="gloss" cx="0.32" cy="0.2" r="0.65">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="gearClip">
+      <circle cx="128" cy="128" r="62"/>
+    </clipPath>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <g fill="url(#metal)">
+      <rect x="112" y="46" width="32" height="34" rx="6"/>
+      <rect x="112" y="46" width="32" height="34" rx="6" transform="rotate(45 128 128)"/>
+      <rect x="112" y="46" width="32" height="34" rx="6" transform="rotate(90 128 128)"/>
+      <rect x="112" y="46" width="32" height="34" rx="6" transform="rotate(135 128 128)"/>
+      <rect x="112" y="46" width="32" height="34" rx="6" transform="rotate(180 128 128)"/>
+      <rect x="112" y="46" width="32" height="34" rx="6" transform="rotate(225 128 128)"/>
+      <rect x="112" y="46" width="32" height="34" rx="6" transform="rotate(270 128 128)"/>
+      <rect x="112" y="46" width="32" height="34" rx="6" transform="rotate(315 128 128)"/>
+      <circle cx="128" cy="128" r="62"/>
+    </g>
+    <circle cx="128" cy="128" r="62" fill="url(#gloss)" clip-path="url(#gearClip)"/>
+
+    <circle cx="128" cy="128" r="34" fill="url(#dial)"/>
+    <rect x="122" y="98" width="12" height="18" rx="5" fill="#fbf1c7" opacity="0.85"/>
+    <circle cx="128" cy="128" r="34" fill="none" stroke="#3c3836" stroke-width="3" opacity="0.4"/>
+  </g>
+</svg>
