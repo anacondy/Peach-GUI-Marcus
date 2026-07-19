@@ -19,4 +19,8 @@
 # this one gets removed upstream; not urgent today.
 #
 # CHANGE THIS PASSWORD — "marcus2026" is a placeholder, not a real credential.
-echo "root:marcus2026" | chpasswd
+# PLACEHOLDER — CHANGE BEFORE BUILDING. Uses direct shadow hash approach.
+# Example (replace with your hashed password):
+# echo 'root:$6$... hashed ...' > /etc/shadow
+# Below is removed to prevent accidental hardcoded credential leaks.
+# echo "root:REPLACEME" | chpasswd
