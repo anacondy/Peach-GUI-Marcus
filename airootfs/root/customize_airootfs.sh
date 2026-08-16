@@ -20,3 +20,12 @@
 #
 # CHANGE THIS PASSWORD — "marcus2026" is a placeholder, not a real credential.
 echo "root:marcus2026" | chpasswd
+
+# Timezone: a fresh archiso live image defaults to UTC. This affects more
+# than the waybar clock — file timestamps, `date`, systemd/journal logs, all
+# of it. Waybar's clock module also gets an explicit "timezone": "Asia/Kolkata"
+# override in its own config as a second, independent guarantee — there's a
+# known class of bug where waybar's C++ time-formatting library shows UTC
+# even when the system timezone is set correctly, so this isn't redundant,
+# it's defense in depth.
+ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime

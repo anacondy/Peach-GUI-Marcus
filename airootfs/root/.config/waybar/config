@@ -4,11 +4,12 @@
     "height": 28,
     "modules-left": ["sway/workspaces"],
     "modules-center": ["clock"],
-    "modules-right": ["network", "cpu", "memory", "battery", "tray"],
+    "modules-right": ["network", "pulseaudio", "cpu", "memory", "battery", "tray"],
 
     "clock": {
         "format": "{:%I:%M %p}",
-        "tooltip-format": "{:%A, %d %B %Y}"
+        "timezone": "Asia/Kolkata",
+        "tooltip-format": "{:%d %B, %Y}"
     },
     "cpu": {
         "format": "CPU {usage}%",
@@ -26,6 +27,16 @@
         "format-wifi": "{essid} ({signalStrength}%)",
         "format-ethernet": "{ipaddr}",
         "format-disconnected": "offline"
+    },
+    "pulseaudio": {
+        "format": "{volume}% {icon}",
+        "format-muted": " muted",
+        "format-icons": {
+            "headphone": "",
+            "default": ["", "", ""]
+        },
+        "scroll-step": 5,
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
     },
     "tray": {
         "spacing": 10
