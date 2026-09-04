@@ -138,6 +138,30 @@ that needs the ISO on hardware, which the VM/hardware run in §Build closes.
 └── docs/  AUDIT-*, PQC-THREAT-MODEL.md, previews/, screenshots/ (real, on target)
 ```
 
+## Test the UI right now (Arch box/VM, no ISO, no merge)
+
+The ISO is only a delivery mechanism — the desktop is Sway + config files, so on
+an existing Arch Linux system (e.g. your KDE VM) you can launch it directly from
+this checkout:
+
+    git fetch origin arena/01a06bbe-peach-gui-marcus
+    git checkout arena/01a06bbe-peach-gui-marcus
+    ./scripts/deploy-to-arch.sh                  # dry run: shows the plan
+    ./scripts/deploy-to-arch.sh --apply --packages   # deploy configs+icons, install deps
+
+Then switch to a free TTY (`Ctrl+Alt+F3`), log in, and run
+`export WLR_RENDERER=pixman && exec sway` (VMs usually lack a real GPU for
+wlroots; pixman is the software renderer). If your KDE session is X11 you can run
+it in a window instead: `WLR_BACKENDS=x11 sway`. Inside: `Alt+Space` Spotlight,
+`Super+Return` kitty, `Print` screenshot. `grim ~/marcus.png` then copy it into
+`docs/screenshots/` to turn a preview slot into a real screenshot.
+`scripts/deploy-to-arch.sh --revert` undoes everything. VS Code is not required
+to run it — it's only useful for browsing/editing the branch (e.g. via Remote-SSH
+into the VM).
+
+Blur/rounded corners won't appear in a VM (vanilla sway + pixman); install SwayFX
+on real hardware via `scripts/install-swayfx.sh` for those.
+
 ## Build & test
 
 1. On an Arch host with `archiso`: `sudo pacman -S archiso`.
