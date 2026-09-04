@@ -1,3 +1,11 @@
+# Marcus Mix — package manifest
+#
+# Every package here costs real megabytes on the ISO and real RAM at runtime, so
+# additions should be justifiable by something a user can actually see or run.
+# Entries are grouped by the subsystem they belong to; the trailing comments on
+# some lines record WHY a package is present, which is the information that
+# stops it getting deleted again during the next cleanup pass.
+
 # --- Core Base & Kernel ---
 base
 linux
@@ -12,6 +20,10 @@ mesa
 vulkan-icd-loader
 vulkan-intel
 intel-media-driver
+# vkcube + vulkaninfo: the cheapest possible "is GPU-accelerated Wayland
+# actually working" check on target hardware. Without these you can only tell
+# whether sway fell back to pixman by reading logs after the fact.
+vulkan-tools
 
 # --- Filesystem Support ---
 btrfs-progs
@@ -50,6 +62,8 @@ sane
 
 # --- Battery, Memory & "AI-ish" Scheduling ---
 power-profiles-daemon
+# zram-generator alone does nothing — it is a systemd generator that needs a
+# config file to act on. airootfs/etc/systemd/zram-generator.conf is that file.
 zram-generator
 ananicy-cpp
 earlyoom
@@ -88,10 +102,17 @@ grml-zsh-config
 # plocate: backs the Spotlight-style search (Alt+Space) — was never actually
 # added before, this is the fix for that
 plocate
-# jq: only needed by the auto-scale.sh output-scaling script
+# jq: only needed by the auto-scale.sh output-scaling script and
+# scripts/perf-profile.sh. Both parse `swaymsg -t get_outputs` with it.
 jq
 
 # --- Custom Wayland & Sway Desktop Environment ---
+# NOTE: this is VANILLA sway. Every effect directive in the config (blur,
+# shadows, corner_radius, layer_effects) is SwayFX-only, and SwayFX is AUR-only,
+# which archiso cannot install from a profile. The effects are therefore inert in
+# the built ISO until scripts/install-swayfx.sh has been run on the target.
+# perf-profile.sh detects this and generates a comments-only effects include so
+# vanilla sway doesn't log "Unknown/invalid command" for every effect line.
 sway
 swaybg
 swaylock
@@ -101,9 +122,24 @@ wofi
 mako
 kitty
 kitty-terminfo
+# xdg-desktop-portal-wlr is a backend; it needs the xdg-desktop-portal frontend
+# daemon to be reachable at all. Shipping only the backend means screenshot and
+# screencast portals silently never answer.
+xdg-desktop-portal
 xdg-desktop-portal-wlr
 polkit-gnome
 xdg-utils
+# gvfs: provides `gio`, which xdg-open uses for non-file URIs, and gives
+# pcmanfm working trash/mount handling on Wayland.
+gvfs
+# Creates the XDG user directories (~/Pictures, ~/Documents, ...). ~/Pictures
+# specifically is what the Print keybinding's grim output path depends on.
+xdg-user-dirs
+# notify-send is invoked by auto-scale.sh, spotlight.sh and the screenshot
+# keybindings, and it comes from libnotify - which was only ever present here
+# transitively. Anything that can disappear when an unrelated package drops a
+# dependency belongs in the manifest explicitly.
+libnotify
 brightnessctl
 grim
 slurp
@@ -120,9 +156,19 @@ wireplumber
 alsa-utils
 
 # --- Core System & UI Fonts ---
+# ttf-jetbrains-mono is NOT optional even though it looks like it: it is named
+# first in waybar/style.css, waybar/dock.css and the sway `font pango:` line.
+# It was absent from this list, so every one of those fell back to DejaVu and
+# the intended typeface never rendered anywhere.
+ttf-jetbrains-mono
 ttf-dejavu
+# Font Awesome Free supplies the private-use codepoints in waybar/config's
+# battery and pulseaudio format-icons (\uf240..\uf244, \uf025..\uf028). Those
+# arrays were empty strings, so no icons rendered at all; the codepoints are now
+# filled in and this is the font that draws them.
 ttf-font-awesome
 noto-fonts
+noto-fonts-emoji
 terminus-font
 wl-clipboard
 cliphist

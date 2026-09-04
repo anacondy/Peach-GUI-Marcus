@@ -1,0 +1,318 @@
+#!/usr/bin/env bash
+# pqc-audit — post-quantum cryptographic posture scanner for a Linux desktop.
+#
+# WHAT IT IS
+#   A read-only audit. It inspects the crypto the machine actually uses — SSH
+#   keys and KEX, TLS libraries, disk encryption, package signing, Secure Boot —
+#   and reports which of it holds up against a cryptographically relevant quantum
+#   adversary and which of it does not. It changes nothing.
+#
+# WHAT IT IS NOT
+#   It is not a scanner for "is this machine broken today". None of the findings
+#   below are exploitable right now by anyone. The threat this addresses is
+#   harvest-now-decrypt-later: ciphertext recorded today is worthless to an
+#   attacker today and readable in ten or fifteen years, and the useful lifetime
+#   of a secret is a property of the secret, not of the attacker. A SSH session
+#   you do not care about in 2040 needs nothing. An encrypted backup of your
+#   family's documents needs something.
+#
+# THE ONE SENTENCE VERSION OF POST-QUANTUM CRYPTO
+#   Shor's algorithm breaks RSA, DH, ECDH, ECDSA and EdDSA outright. It does not
+#   meaningfully break AES or SHA-2/SHA-3 (Grover halves the effective security
+#   level, so AES-256 still gives you 128 bits and you keep using it).
+#   So the migration is entirely about KEY EXCHANGE and SIGNATURES, and the
+#   practical answer for both today is a HYBRID: run a classical algorithm and a
+#   lattice-based one together, so you are no worse off than today even if the
+#   new math turns out to be flawed.
+#
+# USAGE
+#   ./pqc-audit                 human-readable report
+#   ./pqc-audit --json          machine-readable
+#   ./pqc-audit --strict        exit 1 if anything scores below "protected"
+set -uo pipefail
+
+MODE="text"
+[[ "${1:-}" == "--json" ]] && MODE="json"
+[[ "${1:-}" == "--strict" ]] && MODE="strict"
+
+# status: protected | hybrid | partial | exposed | unknown
+declare -a F=()
+add() { # id status detail [remediation]
+    # ${4:-} not $4 — the file runs under `set -u` and several findings have no
+    # remediation to offer, which would otherwise abort the whole audit.
+    F+=("$1|$2|$3|${4:-}")
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+readlink_f() { readlink -f "$1" 2>/dev/null; }
+
+# ---------------------------------------------------------------------------
+# 1. OpenSSH — key exchange
+# ---------------------------------------------------------------------------
+audit_ssh_kex() {
+    have ssh || { add "ssh-kex" "unknown" "openssh not installed" "pacman -S openssh"; return; }
+    local ver kex
+    ver="$(ssh -V 2>&1 | sed -E 's/.*OpenSSH_([0-9.]+).*/\1/')"
+    kex="$(ssh -Q kex 2>/dev/null | tr '\n' ' ')"
+
+    # OpenSSH 8.5 added the sntrup761x25519-sha512 hybrid KEX but left it off by
+    # default; 9.9 turned it on by default; 10.0 added mlkem768x25519-sha256 and
+    # made that the preferred default. "Offered" and "used" are different claims,
+    # so the version decides which one we make.
+    local vmaj vmin
+    vmaj="${ver%%.*}"
+    vmin="$(sed -E 's/^[0-9]+\.([0-9]+).*/\1/' <<<"$ver")"
+    local is_default=0
+    if [[ "${vmaj:-0}" -ge 10 || ( "${vmaj:-0}" -eq 9 && "${vmin:-0}" -ge 9 ) ]]; then
+        is_default=1
+    fi
+
+    if grep -q 'mlkem768x25519-sha256' <<<"$kex"; then
+        add "ssh-kex" "protected" "OpenSSH $ver offers ML-KEM768x25519 hybrid KEX (FIPS 203 lattice + X25519) and uses it by default" "none"
+    elif grep -q 'sntrup761x25519-sha512' <<<"$kex" && (( is_default )); then
+        add "ssh-kex" "protected" "OpenSSH $ver uses the sntrup761x25519-sha512 hybrid KEX by default (default since 9.9)" "consider upgrading to OpenSSH >= 10.0 for ML-KEM"
+    elif grep -q 'sntrup761x25519-sha512' <<<"$kex"; then
+        add "ssh-kex" "partial" "OpenSSH $ver supports the sntrup761x25519-sha512 hybrid KEX but does NOT use it by default before 9.9 — your sessions are almost certainly still classical" "upgrade openssh, or pin it now: KexAlgorithms sntrup761x25519-sha512@openssh.com,curve25519-sha256 in both ssh_config and sshd_config"
+    else
+        add "ssh-kex" "exposed" "OpenSSH $ver has no post-quantum key exchange — every SSH session you make can be recorded and decrypted later" "upgrade openssh; verify with: ssh -Q kex | grep -E 'mlkem|sntrup'"
+    fi
+
+    # Server side can still be pinned to a classical list in sshd_config.
+    if [[ -r /etc/ssh/sshd_config ]]; then
+        if grep -Eq '^[[:space:]]*KexAlgorithms' /etc/ssh/sshd_config && \
+           ! grep -E '^[[:space:]]*KexAlgorithms' /etc/ssh/sshd_config | grep -Eq 'mlkem|sntrup'; then
+            add "ssh-kex-server" "exposed" "/etc/ssh/sshd_config pins KexAlgorithms to a list with no post-quantum entry, overriding the safe default" "add mlkem768x25519-sha256 to KexAlgorithms, or drop the line and take the default"
+        fi
+    fi
+}
+
+# ---------------------------------------------------------------------------
+# 2. SSH identities — the part that is NOT solved
+# ---------------------------------------------------------------------------
+audit_ssh_keys() {
+    local total=0 weak=0 rsa=0 ecdsa=0 ed25519=0 pq=0 f k bits
+    local keydirs=("$HOME/.ssh" /etc/ssh)
+    [[ "$(id -u)" -eq 0 ]] && keydirs+=(/root/.ssh)
+
+    while IFS= read -r f; do
+        [[ -r "$f" ]] || continue
+        # Public keys and private keys both start with an algorithm marker.
+        k="$(head -c 64 "$f" 2>/dev/null)"
+        case "$k" in
+            *"ssh-rsa"*|*"BEGIN RSA"*) total=$((total+1)); rsa=$((rsa+1)) ;;
+            *"ecdsa-sha2"*)            total=$((total+1)); ecdsa=$((ecdsa+1)) ;;
+            *"ssh-ed25519"*)           total=$((total+1)); ed25519=$((ed25519+1)) ;;
+            *"ssh-mldsa"*|*"mldsa"*|*"ML-DSA"*) total=$((total+1)); pq=$((pq+1)) ;;
+            *) continue ;;
+        esac
+        if grep -Eq 'ssh-rsa|BEGIN RSA' <<<"$k" && have ssh-keygen; then
+            bits="$(ssh-keygen -l -f "$f" 2>/dev/null | awk '{print $1}')"
+            [[ -n "$bits" && "$bits" -lt 3072 ]] && weak=$((weak+1))
+        fi
+    done < <(find "${keydirs[@]}" -maxdepth 1 -type f \
+                \( -name 'id_*' -o -name '*.pub' -o -name 'ssh_host_*' \) \
+                ! -name '*.pub.bak' 2>/dev/null)
+
+    if (( total == 0 )); then
+        add "ssh-identity" "unknown" "no SSH identities or host keys found in ~/.ssh or /etc/ssh" "generate one: ssh-keygen -t ed25519"
+        return
+    fi
+
+    # Honest framing: no SSH implementation ships post-quantum SIGNATURES yet.
+    # Every key counted here — including Ed25519, which is the best classical
+    # option — can be forged by a future quantum adversary. Key exchange being
+    # hybrid does not fix this, and conflating the two is the most common
+    # misunderstanding in this whole area.
+    add "ssh-identity" "exposed" \
+        "$total key(s): $rsa RSA ($weak under 3072-bit), $ecdsa ECDSA, $ed25519 Ed25519, $pq post-quantum. Signatures have no post-quantum option in OpenSSH yet, so all of these are forgeable by a future quantum adversary" \
+        "nothing to do today — this is an upstream OpenSSH gap, not a misconfiguration. Track OpenSSH ML-DSA support; meanwhile keep keys short-lived and rotate after the migration lands"
+}
+
+# ---------------------------------------------------------------------------
+# 3. GnuPG
+# ---------------------------------------------------------------------------
+audit_gpg() {
+    have gpg || { add "gpg" "unknown" "gnupg not installed" ""; return; }
+    local ver pq=0 n=0
+    ver="$(gpg --version 2>/dev/null | head -1)"
+    if gpg --version 2>/dev/null | grep -Eqi 'mldsa|ml-kem|kyber|dilithium|slh-dsa|falcon'; then
+        pq=1
+    fi
+    # Count the keys that would actually be at risk, not just any key.
+    n="$(gpg --list-keys --with-colons 2>/dev/null | awk -F: '/^pub/{c++} END{print c+0}')"
+    if (( pq )); then
+        add "gpg" "hybrid" "$ver advertises post-quantum algorithm support; $n public key(s) in the keyring" "re-sign long-lived keys with a post-quantum or hybrid key once tooling stabilises"
+    else
+        add "gpg" "exposed" "$ver has no post-quantum algorithms; $n public key(s) in the keyring, including any commit-signing or package-signing keys" "post-quantum signatures land in GnuPG upstream; until then, treat long-lived signing keys as expiring at Q-day and plan a re-sign"
+    fi
+}
+
+# ---------------------------------------------------------------------------
+# 4. TLS libraries — where hybrid KEX actually shipped first
+# ---------------------------------------------------------------------------
+audit_tls() {
+    local ver maj min
+    if have openssl; then
+        ver="$(openssl version 2>/dev/null | awk '{print $2}')"
+        maj="${ver%%.*}"; min="$(sed -E 's/^([0-9]+)\.([0-9]+).*/\2/' <<<"$ver")"
+        # OpenSSL 3.5 (April 2025) is the first release shipping ML-KEM, ML-DSA
+        # and SLH-DSA as the finalised FIPS 203/204/205 algorithms. 3.2 shipped
+        # the earlier draft Kyber/Dilithium via a provider.
+        if have openssl && openssl list -kem-algorithms 2>/dev/null | grep -qi 'ML-KEM\|KYBER'; then
+            add "tls-openssl" "protected" "OpenSSL $ver exposes a lattice KEM (ML-KEM/Kyber) — hybrid X25519ML-KEM768 is what modern browsers negotiate with Cloudflare and Google" "none"
+        elif [[ "${maj:-0}" -gt 3 || ( "${maj:-0}" -eq 3 && "${min:-0}" -ge 2 ) ]]; then
+            add "tls-openssl" "partial" "OpenSSL $ver may carry draft-era Kyber/Dilithium; no KEM is listed by 'openssl list -kem-algorithms'" "upgrade to OpenSSL >= 3.5 for the finalised FIPS 203/204/205 algorithms"
+        else
+            add "tls-openssl" "exposed" "OpenSSL $ver predates any post-quantum support (3.2+ required, 3.5 recommended)" "upgrade openssl"
+        fi
+    else
+        add "tls-openssl" "unknown" "openssl not installed" ""
+    fi
+
+    # Firefox is the practical test of whether hybrid TLS reaches real traffic:
+    # it enabled X25519ML-KEM768 by default in 132.
+    if have firefox; then
+        local fver
+        fver="$(firefox --version 2>/dev/null | awk '{print $NF}')"
+        add "tls-browser" "protected" "Firefox $fver — hybrid post-quantum TLS key agreement has been on by default since Firefox 132; verify at https://pq.cloudflareresearch.com" "none"
+    fi
+}
+
+# ---------------------------------------------------------------------------
+# 5. Disk encryption
+# ---------------------------------------------------------------------------
+audit_disk() {
+    local luks=0 dev cipher
+    if [[ -r /proc/mounts ]] && grep -q '/dev/mapper/' /proc/mounts; then
+        luks=1
+    fi
+    if have cryptsetup && cryptsetup isLuks "$(findmnt -no SOURCE / 2>/dev/null)" 2>/dev/null; then
+        luks=1
+    fi
+
+    if (( ! luks )); then
+        add "disk" "exposed" "no LUKS-encrypted volume detected as mounted — the disk is readable by anyone with physical access, quantum computer or not" "this is a classical problem, not a quantum one, but it dwarfs everything else on this report. Install with encryption, or convert with arch-install-scripts"
+        return
+    fi
+
+    cipher="$(cryptsetup status "$(lsblk -no NAME,FSTYPE,PKNAME / 2>/dev/null | awk '$2=="crypto_LUKS"{print $1; exit}')" 2>/dev/null | awk -F': *' '/cipher:/{print $2}')"
+    # Get this right, because the popular version of this advice is wrong.
+    # AES-256-XTS with a passphrase-derived key is already considered adequate
+    # against a quantum adversary: Grover's algorithm halves the effective key
+    # length, so 256-bit AES still yields 128 bits of security. There is no
+    # "wrap the LUKS master key in Kyber" feature in cryptsetup, and bolting one
+    # on would not help — the attack surface is the passphrase and the KDF, not
+    # the cipher.
+    add "disk" "protected" \
+        "LUKS in use${cipher:+ with $cipher}. Symmetric ciphers are NOT broken by quantum computers — AES-256-XTS keeps 128-bit security under Grover. The real weakness is passphrase strength, not the algorithm" \
+        "use a long passphrase, not a short password: it is the only thing standing between an attacker and the volume. Prefer AES-256 over AES-128 for the Grover margin. No post-quantum action required"
+}
+
+# ---------------------------------------------------------------------------
+# 6. Package signing
+# ---------------------------------------------------------------------------
+audit_pacman() {
+    [[ -r /etc/pacman.conf ]] || { add "pkg-signing" "unknown" "no pacman.conf (not an Arch system?)"; return; }
+    local siglevel
+    siglevel="$(awk '/^[[:space:]]*SigLevel/{print $0; exit}' /etc/pacman.conf)"
+    if grep -qi 'Never\|TrustAll' <<<"$siglevel"; then
+        add "pkg-signing" "exposed" "pacman SigLevel is weakened ($siglevel) — unsigned or forged packages would install without a warning" "restore 'SigLevel = Required DatabaseOptional'"
+    else
+        add "pkg-signing" "exposed" \
+            "pacman verifies packages with GPG signatures ($siglevel), which use RSA/EdDSA. A quantum adversary could forge a package signature; no PQC-signed repository exists for Arch" \
+            "upstream problem. Keep the keyring current (pacman-key --populate archlinux) and prefer the official repos over unsigned AUR builds"
+    fi
+}
+
+# ---------------------------------------------------------------------------
+# 7. Secure Boot
+# ---------------------------------------------------------------------------
+audit_secureboot() {
+    have mokutil || { add "secure-boot" "unknown" "mokutil not installed; cannot read Secure Boot state" ""; return; }
+    local state
+    state="$(mokutil --sb-state 2>/dev/null || echo unknown)"
+    if grep -qi enabled <<<"$state"; then
+        add "secure-boot" "partial" \
+            "Secure Boot is enabled, but the chain (shim -> GRUB/systemd-boot -> kernel) is verified with RSA PKCS#7 signatures. A quantum adversary could forge a boot component; no PQC-signed shim exists upstream" \
+            "nothing actionable yet. If you rely on Secure Boot for integrity, know that its guarantee expires at Q-day like every other RSA signature"
+    else
+        add "secure-boot" "exposed" "Secure Boot is not enabled ($state)" "independent of quantum concerns — enable it or accept unsigned boot components"
+    fi
+}
+
+# ---------------------------------------------------------------------------
+# 8. Kernel / system crypto availability
+# ---------------------------------------------------------------------------
+audit_liboqs() {
+    if ldconfig -p 2>/dev/null | grep -qi 'liboqs'; then
+        add "liboqs" "protected" "liboqs is installed — post-quantum primitives are available to anything linked against it (oqs-provider gives OpenSSL ML-KEM/ML-DSA)" "none"
+    else
+        add "liboqs" "unknown" "liboqs is not installed. Not a vulnerability — OpenSSL 3.5+ carries the FIPS algorithms natively, so you only need this for oqs-provider or custom tooling" "optional: build liboqs from the AUR if you want to develop against it"
+    fi
+}
+
+# ---------------------------------------------------------------------------
+# run
+# ---------------------------------------------------------------------------
+audit_ssh_kex
+audit_ssh_keys
+audit_gpg
+audit_tls
+audit_disk
+audit_pacman
+audit_secureboot
+audit_liboqs
+
+score() {
+    local exposed=0 partial=0 unknown=0 protected=0 e
+    for e in "${F[@]}"; do
+        case "${e#*|}" in
+            protected*) protected=$((protected+1)) ;;
+            hybrid*)    protected=$((protected+1)) ;;
+            partial*)   partial=$((partial+1)) ;;
+            exposed*)   exposed=$((exposed+1)) ;;
+            *)          unknown=$((unknown+1)) ;;
+        esac
+    done
+    printf '%d %d %d %d\n' "$protected" "$partial" "$exposed" "$unknown"
+}
+
+if [[ "$MODE" == "json" ]]; then
+    printf '{\n  "host": "%s",\n  "date": "%s",\n  "findings": [\n' \
+        "$(hostname 2>/dev/null || echo unknown)" "$(date '+%d %B %Y, %H:%M %Z')"
+    local_sep=""
+    for e in "${F[@]}"; do
+        IFS='|' read -r id status detail fix <<<"$e"
+        printf '%s    {"id": "%s", "status": "%s", "detail": "%s", "remediation": "%s"}\n' \
+            "$local_sep" "$id" "$status" \
+            "$(sed 's/"/\\"/g' <<<"$detail")" "$(sed 's/"/\\"/g' <<<"$fix")"
+        local_sep=","
+    done
+    printf '  ]\n}\n'
+else
+    echo "=============================================================================="
+    echo " pqc-audit — post-quantum posture    $(hostname 2>/dev/null)    $(date '+%d %B %Y, %H:%M %Z')"
+    echo "=============================================================================="
+    echo
+    printf ' [%-9s] %-14s %s\n' "STATUS" "AREA" "FINDING"
+    echo "------------------------------------------------------------------------------"
+    for e in "${F[@]}"; do
+        IFS='|' read -r id status detail fix <<<"$e"
+        printf ' [%-9s] %-14s %s\n' "$status" "$id" "$detail"
+        [[ -n "$fix" ]] && printf ' %13s -> %s\n' "" "$fix"
+    done
+    echo "------------------------------------------------------------------------------"
+    read -r p pa ex un < <(score)
+    echo " protected/hybrid: $p   partial: $pa   exposed: $ex   unknown: $un"
+    echo
+    echo " Read the 'exposed' lines carefully. Most of them are UPSTREAM gaps — no SSH,"
+    echo " GnuPG or pacman release in the world offers post-quantum signatures yet — and"
+    echo " are not yours to fix. The ones that are yours are the configuration ones:"
+    echo " a pinned sshd KexAlgorithms list, a weakened pacman SigLevel, an unencrypted"
+    echo " disk, or an OpenSSL too old to negotiate hybrid TLS."
+fi
+
+if [[ "$MODE" == "strict" ]]; then
+    read -r _ _ ex _ < <(score)
+    (( ex == 0 ))
+fi

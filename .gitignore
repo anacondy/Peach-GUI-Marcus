@@ -1,0 +1,37 @@
+# Archiso build output — large, machine-specific, and regenerable. Never commit.
+/out/
+/work/
+archiso-work/
+
+# Scratch files from the pre-refactor build script, which appended the VM
+# package list onto the tracked file and restored it from a .bak. The current
+# script stages a copy in a temp dir instead, but ignore these anyway so an
+# interrupted old build can't leave them behind.
+packages.x86_64.bak
+packages.x86_64.tmp
+
+# The root password HASH (not the password) is generated on the build host by
+# scripts/set-root-password.sh and consumed during the build. It must never be
+# committed — a hash in a public repo is an offline cracking exercise.
+airootfs/etc/marcus/root-password-hash
+
+# Generated at session start by sway/scripts/perf-profile.sh. Its contents
+# depend on the machine's panel and refresh rate, so committing it would make
+# the repo describe one laptop.
+airootfs/root/.config/sway/effects.conf
+
+# Test scratch space.
+/tests/.cache/
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# Real screenshots captured on target hardware (scripts/capture-screenshots.sh)
+# ARE meant to be committed, so this ignores only the temp dir the script uses
+# while assembling them.
+/docs/screenshots/.tmp/
+
+# Preview renderer dependencies (optional tooling, not part of the ISO build).
+tools/node_modules
+tools/node_modules/
+tools/package-lock.json

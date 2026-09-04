@@ -1,0 +1,36 @@
+# ~/.config/mako/config
+#
+# Without this file mako falls back to its built-in defaults: a white box with
+# black text. Every other surface in Marcus Mix is Gruvbox dark, so stock mako
+# notifications were the one jarring thing on the desktop - and they appear on
+# top of everything else, which makes it more visible, not less.
+#
+# mako is launched by `exec mako` in ~/.config/sway/config. Reload after editing
+# with: makoctl reload
+
+font=JetBrains Mono 11
+background-color=#282828ee
+text-color=#ebdbb2
+width=380
+height=120
+margin=10
+padding=10
+border-size=1
+border-color=#504945
+border-radius=10
+default-timeout=5000
+group-by=app-name
+max-visible=4
+anchor=top-right
+layer=overlay
+
+# Urgency-driven accent colours, matched to the waybar palette so a critical
+# notification reads as the same "red" the battery module uses.
+[urgency=low]
+border-color=#928374
+default-timeout=3000
+
+[urgency=high]
+border-color=#fb4934
+background-color=#2b1f1fee
+default-timeout=0

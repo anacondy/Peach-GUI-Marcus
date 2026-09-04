@@ -1,0 +1,12 @@
+{
+  "name": "peach-gui-marcus-preview-renderer",
+  "private": true,
+  "type": "module",
+  "description": "Optional tooling that renders docs/previews/*.png for the README. Not part of the ISO build and not needed to build or run Marcus Mix.",
+  "scripts": {
+    "render": "node tools/render-preview.mjs"
+  },
+  "devDependencies": {
+    "sharp": "^0.33.0"
+  }
+}

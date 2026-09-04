@@ -9,19 +9,20 @@
     "clock": {
         "format": "{:%I:%M %p}",
         "timezone": "Asia/Kolkata",
-        "tooltip-format": "{:%d %B, %Y}"
+        "interval": 30,
+        "tooltip-format": "{:%A, %d %B %Y}"
     },
     "cpu": {
         "format": "CPU {usage}%",
         "interval": 2
     },
     "memory": {
-        "format": "RAM {}%",
+        "format": "RAM {percentage}%",
         "interval": 2
     },
     "battery": {
         "format": "{capacity}% {icon}",
-        "format-icons": ["", "", "", "", ""]
+        "format-icons": ["\uf244", "\uf243", "\uf242", "\uf241", "\uf240"]
     },
     "network": {
         "format-wifi": "{essid} ({signalStrength}%)",
@@ -30,10 +31,10 @@
     },
     "pulseaudio": {
         "format": "{volume}% {icon}",
-        "format-muted": " muted",
+        "format-muted": "\uf026 muted",
         "format-icons": {
-            "headphone": "",
-            "default": ["", "", ""]
+            "headphone": "\uf025",
+            "default": ["\uf026", "\uf027", "\uf028"]
         },
         "scroll-step": 5,
         "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"

@@ -12,8 +12,8 @@
 # cables, so the fallback isn't a rare edge case, it's the common case on
 # budget hardware — this script is written assuming it'll be hit often.
 #
-# Run at sway startup (see config/sway-theme.conf). Re-run manually after
-# plugging in a new monitor:
+# Run at sway startup and on every config reload (see ~/.config/sway/config,
+# `exec_always`). Re-run manually after plugging in a new monitor:
 #   ~/.config/sway/scripts/auto-scale.sh
 #
 # Requires: jq
@@ -70,6 +70,13 @@ swaymsg -t get_outputs -r | jq -c '.[]' | while read -r out; do
     height=$(jq -r '.current_mode.height // 0' <<<"$out")
     (( width > 0 && height > 0 )) || continue
 
+    # Already-correct guard. This script runs on every `swaymsg reload`, and
+    # `swaymsg output ... scale` triggers a full output reconfigure (mode set,
+    # surface reallocation, every layer-shell surface repositioned) even when
+    # the value is identical. That is a visible flicker plus a multi-ms stall
+    # for literally no change, so compare first and stay quiet.
+    current_scale=$(jq -r '.scale // 1' <<<"$out")
+
     # Different sway/wlroots versions have exposed physical size under
     # different keys over time — try the plausible ones, treat 0/missing as
     # "not trustworthy" rather than guessing with bad data.
@@ -94,6 +101,13 @@ swaymsg -t get_outputs -r | jq -c '.[]' | while read -r out; do
     fi
     scale=$(round_scale "$scale")
 
+    # See "Already-correct guard" above — float compare, because sway reports
+    # 1.000000 and we produce 1.00.
+    if awk -v a="$current_scale" -v b="$scale" 'BEGIN{exit !(a==b)}'; then
+        echo "auto-scale: $name (${width}x${height}) already at scale $scale — no change"
+        continue
+    fi
+
     swaymsg output "$name" scale "$scale" >/dev/null
-    echo "auto-scale: $name (${width}x${height}) -> scale $scale"
+    echo "auto-scale: $name (${width}x${height}) -> scale $scale (was $current_scale)"
 done

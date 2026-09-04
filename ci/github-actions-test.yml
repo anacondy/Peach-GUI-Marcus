@@ -1,0 +1,31 @@
+# Run the dependency-free suite on every push and PR.
+#
+# This is the same suite run-tests.sh runs locally; it needs only Python 3 and a
+# POSIX shell, both of which are on every GitHub runner. It cannot boot the ISO -
+# nothing in CI can - so it guards exactly the things it is able to prove: config
+# and package wiring, build-script integrity, render-latency/tier math, launcher
+# behaviour, and the absence of committed credentials.
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Shell syntax (bash -n) on every shell file
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            bash -n "$f" || { echo "syntax error: $f"; fail=1; }
+          done < <(git ls-files '*.sh' 'scripts/pqc-audit')
+          exit "$fail"
+      - name: Run the full test suite
+        run: bash tests/run-tests.sh

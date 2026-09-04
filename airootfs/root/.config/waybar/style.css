@@ -1,5 +1,17 @@
+/* Marcus Mix top bar.
+ *
+ * font-family is a STACK, not a single family. "JetBrains Mono" has no glyphs
+ * for the Font Awesome private-use codepoints used by the battery and volume
+ * modules; if it is listed alone, GTK's Pango backend never falls back and the
+ * icons render as empty boxes. Listing the icon font after it lets Pango find
+ * the right face per-glyph.
+ *
+ * "Noto Sans Symbols 2" / "DejaVu Sans" are the last-resort fallbacks so the
+ * bar still shows *something* legible if ttf-font-awesome is ever dropped from
+ * packages.x86_64.
+ */
 * {
-    font-family: "JetBrains Mono";
+    font-family: "JetBrains Mono", "Font Awesome 6 Free", "Font Awesome 5 Free", "Noto Sans Symbols 2", "DejaVu Sans", sans-serif;
     font-size: 13px;
 }
 
@@ -25,7 +37,9 @@ window#waybar {
     color: #1d2021;
 }
 
-#clock, #network, #cpu, #memory, #battery, #tray {
+/* #pulseaudio was missing from this selector, so the volume module inherited no
+   pill background and sat visually apart from its neighbours. */
+#clock, #network, #pulseaudio, #cpu, #memory, #battery, #tray {
     padding: 0 10px;
     margin: 3px 2px;
     border-radius: 8px;
@@ -36,6 +50,7 @@ window#waybar {
 #cpu { color: #83a598; }
 #memory { color: #d3869b; }
 #network { color: #8ec07c; }
+#pulseaudio { color: #83a598; }
 #battery { color: #ebdbb2; }
 #battery.charging { color: #8ec07c; }
 #battery.warning:not(.charging) { color: #fe8019; }
