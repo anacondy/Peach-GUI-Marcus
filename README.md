@@ -142,11 +142,15 @@ that needs the ISO on hardware, which the VM/hardware run in §Build closes.
 
 The ISO is only a delivery mechanism — the desktop is Sway + config files, so on
 an existing Arch Linux system (e.g. your KDE VM) you can launch it directly from
-this checkout:
+this checkout. **You must have the repo cloned on that machine first** — running
+`git fetch`/`checkout` from your home directory fails with "not a git
+repository":
 
-    git fetch origin arena/01a06bbe-peach-gui-marcus
+    cd ~
+    git clone https://github.com/anacondy/Peach-GUI-Marcus.git
+    cd Peach-GUI-Marcus
     git checkout arena/01a06bbe-peach-gui-marcus
-    ./scripts/deploy-to-arch.sh                  # dry run: shows the plan
+    ./scripts/deploy-to-arch.sh                      # dry run: shows the plan
     ./scripts/deploy-to-arch.sh --apply --packages   # deploy configs+icons, install deps
 
 Then switch to a free TTY (`Ctrl+Alt+F3`), log in, and run

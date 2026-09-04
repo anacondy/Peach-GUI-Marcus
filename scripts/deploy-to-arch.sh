@@ -53,6 +53,18 @@ for a in "$@"; do
     esac
 done
 
+# Sanity check: this script must be run from a checkout of the repo (it reads the
+# configs out of airootfs/). If someone copied just this file somewhere, fail
+# with a useful message instead of deploying empty directories.
+if [[ ! -d "${AIROOTFS}/root/.config/sway" ]]; then
+    echo "deploy-to-arch: cannot find airootfs/ next to this script." >&2
+    echo "deploy-to-arch: run it from a clone of the repo, e.g." >&2
+    echo "    git clone https://github.com/anacondy/Peach-GUI-Marcus.git" >&2
+    echo "    cd Peach-GUI-Marcus && git checkout arena/01a06bbe-peach-gui-marcus" >&2
+    echo "    ./scripts/deploy-to-arch.sh" >&2
+    exit 1
+fi
+
 HOME="${HOME:?HOME must be set}"
 CONF="${HOME}/.config"
 ICONS_SRC="${AIROOTFS}/usr/share/icons/MarcusMix"
